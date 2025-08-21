@@ -53,7 +53,6 @@ class MyPasswordChangeDoneView(PasswordChangeDoneView):
 
 
 class SubscribeView(FormView):
-    # TODO: this view is no longer used and can be removed.
     template_name = "members/subscribe_form.html"
     form_class = SubscribeForm
     success_url = reverse_lazy('members:subscribe_done')
@@ -64,5 +63,4 @@ class SubscribeView(FormView):
 
 
 class SubscribeDoneView(TemplateView):
-    # TODO: this view is no longer used and can be removed.
     template_name = "members/subscribe_form_done.html"

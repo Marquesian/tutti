@@ -20,7 +20,7 @@ brotli==1.1.0
     # via whitenoise
 certifi==2024.2.2
     # via requests
-cffi==1.16.0
+cffi==1.17.1
     # via cryptography
 charset-normalizer==3.3.2
     # via requests
@@ -98,7 +98,7 @@ packaging==24.0
     # via matplotlib
 phonenumbers==8.13.36
     # via -r requirements.in
-pillow==10.3.0
+pillow==11.3.0
     # via matplotlib
 pyasn1==0.6.0
     # via ldap3

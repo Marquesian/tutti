@@ -6,9 +6,10 @@
 {% block content %}
     <h2>Become a member</h2>
     <p>
-        Great that you're interested in becoming a member of Quadrivium, the student music association!
-        Fill out the complete form to become a member or only leave your contact details if you're not yet sure and want
-        more info.
+        Great that you're interested in becoming a member of Quadrivium, the student music association! If you're not
+        sure yet, please fill in the other form. The yearly contribution fee for a membership is around 75 euros for
+        students and 150 for non-students. Please note: Your membership will be automatically extended. If you wish to
+        unsubscribe, you must inform the secretary.
     </p>
     <p>
         <small class="text-muted">
@@ -21,37 +22,35 @@
 
     <form method="post" action="{% url 'members:subscribe' %}">
         {% csrf_token %}
-        <div class="alert alert-info">
-            If you're just interested, fill in your contact details and we will send an email with more information,
-            around the beginning of the college year.
+        {% bootstrap_form_errors form type="non_fields" %}
+        <div class="form-group row required">
+            {% bootstrap_field form.first_name label_class="font-weight-bold control-label" required_css_class="required" form_group_class="col-sm-3" %}
+            {% bootstrap_field form.last_name label_class="font-weight-bold control-label" required_css_class="required" form_group_class="col-sm-9" %}
         </div>
-        {% bootstrap_form_errors form type='non_fields' %}
-        {% bootstrap_field form.first_name layout='horizontal' label_class='col-sm-3 col-form-label' field_class='col-sm-9' %}
-        {% bootstrap_field form.last_name layout='horizontal' label_class='col-sm-3 col-form-label' field_class='col-sm-9' %}
-        {% bootstrap_field form.email layout='horizontal' label_class='col-sm-3 col-form-label' field_class='col-sm-9' %}
-        {% bootstrap_field form.phone_number layout='horizontal' label_class='col-sm-3 col-form-label' field_class='col-sm-9' %}
-        {% bootstrap_field form.instruments layout='horizontal' label_class='col-sm-3 col-form-label' field_class='col-sm-9' %}
-        {% buttons %}
-            <button type="submit" class="btn btn-primary">I'm interested</button>
-        {% endbuttons %}
-        <div class="alert alert-info">
-            If you want to become a member fill in the other details here as well!
-            We will reach out to you with all info and to complete the membership application.
-            The yearly contribution fee for a membership is around 60 euros.
-        </div>
-        {% bootstrap_field form.initials layout='horizontal' label_class='col-sm-3 col-form-label' field_class='col-sm-9' %}
-        {% bootstrap_field form.street layout='horizontal' label_class='col-sm-3 col-form-label' field_class='col-sm-9' %}
-        {% bootstrap_field form.postal_code layout='horizontal' label_class='col-sm-3 col-form-label' field_class='col-sm-9' %}
-        {% bootstrap_field form.city layout='horizontal' label_class='col-sm-3 col-form-label' field_class='col-sm-9' %}
-        {% bootstrap_field form.country layout='horizontal' label_class='col-sm-3 col-form-label' field_class='col-sm-9' %}
-        {% bootstrap_field form.gender layout='horizontal' label_class='col-sm-3 col-form-label' field_class='col-sm-9' %}
-        {% bootstrap_field form.date_of_birth layout='horizontal' label_class='col-sm-3 col-form-label' field_class='col-sm-9' %}
-        {% bootstrap_field form.preferred_language layout='horizontal' label_class='col-sm-3 col-form-label' field_class='col-sm-9' %}
-        {% bootstrap_field form.is_student layout='horizontal' label_class='col-sm-3 col-form-label' field_class='col-sm-9' %}
-        {% bootstrap_field form.field_of_study layout='horizontal' label_class='col-sm-3 col-form-label' field_class='col-sm-9' %}
-        {% bootstrap_field form.iban layout='horizontal' label_class='col-sm-3 col-form-label' field_class='col-sm-9' %}
-        {% bootstrap_field form.tue_card_number layout='horizontal' label_class='col-sm-3 col-form-label' field_class='col-sm-9' %}
-        {% bootstrap_field form.remarks layout='horizontal' label_class='col-sm-3 col-form-label' field_class='col-sm-9' %}
+        {% bootstrap_field form.email label_class="font-weight-bold control-label" required_css_class="required" %}
+        {% bootstrap_field form.ensure_subscribe label_class="font-weight-bold control-label" required_css_class="required" %}
+        {% bootstrap_field form.initials label_class="font-weight-bold control-label" required_css_class="required" %}
+        {% bootstrap_field form.phone_number label_class="font-weight-bold control-label" required_css_class="required" %}
+        {% bootstrap_field form.instruments label_class="font-weight-bold control-label" required_css_class="required" %}
+        {% bootstrap_field form.street label_class="font-weight-bold control-label" required_css_class="required" %}
+        {% bootstrap_field form.postal_code label_class="font-weight-bold control-label" required_css_class="required" %}
+        {% bootstrap_field form.city label_class="font-weight-bold control-label" required_css_class="required" %}
+        {% bootstrap_field form.country label_class="font-weight-bold control-label" required_css_class="required" %}
+        {% bootstrap_field form.gender label_class="font-weight-bold control-label" required_css_class="required" %}
+        {% bootstrap_field form.date_of_birth label_class="font-weight-bold control-label" required_css_class="required" %}
+        {% bootstrap_field form.preferred_language label_class="font-weight-bold control-label" required_css_class="required" %}
+        {% bootstrap_field form.is_student label_class="font-weight-bold control-label" required_css_class="required" %}
+        {% bootstrap_field form.field_of_study label_class="font-weight-bold control-label" required_css_class="required" %}
+        {% bootstrap_field form.iban label_class="font-weight-bold control-label" required_css_class="required" %}
+        {% bootstrap_field form.tue_card_number label_class="font-weight-bold control-label" required_css_class="required" %}
+        {% bootstrap_field form.sub_association label_class="font-weight-bold control-label" required_css_class="required" %}
+        {% bootstrap_field form.add_to_chats label_class="font-weight-bold control-label" required_css_class="required" %}
+        <h3>Visual media consent</h3>
+        {% bootstrap_field form.photo_video_consent_external_group label_class="font-weight-bold control-label" required_css_class="required" %}
+        {% bootstrap_field form.photo_video_consent_external label_class="font-weight-bold control-label" required_css_class="required" %}
+        {% bootstrap_field form.photo_video_consent_internal label_class="font-weight-bold control-label" required_css_class="required" %}
+        <h3>Remarks</h3>
+        {% bootstrap_field form.remarks show_label=False label_class="font-weight-bold control-label" required_css_class="required" %}
 
         {% buttons %}
             <button type="submit" class="btn btn-primary">Become a member</button>

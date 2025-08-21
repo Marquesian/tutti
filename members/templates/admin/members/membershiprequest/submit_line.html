@@ -1,0 +1,7 @@
+{% extends "admin/submit_line.html" %}
+{% load i18n admin_urls %}
+
+{% block submit-row %}
+    <a href="{% url 'admin:members_membershiprequest_register' original.pk %}" class="button default">Register</a>
+    <a href="{% url 'admin:members_membershiprequest_ignore' original.pk %}" class="deletelink">Ignore</a>
+{% endblock %}

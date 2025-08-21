@@ -1,0 +1,70 @@
+{% extends "admin/base_site.html" %}
+{% load i18n admin_urls static %}
+
+{% block extrahead %}
+    {{ super.block }}
+    <script src="{% url 'admin:jsi18n' %}"></script>
+    {{ form.media }}
+{% endblock %}
+
+{% block breadcrumbs %}
+<div class="breadcrumbs">
+<a href="{% url 'admin:index' %}">Home</a>
+&rsaquo; <a href="{% url 'admin:app_list' app_label=opts.app_label %}">{{ opts.app_config.verbose_name }}</a>
+&rsaquo; <a href="{% url opts|admin_urlname:'changelist' %}">{{ opts.verbose_name_plural|capfirst }}</a>
+&rsaquo; <a href="{% url opts|admin_urlname:'change' object.pk|admin_urlquote %}">{{ object|truncatewords:"18" }}</a>
+&rsaquo; Register
+</div>
+{% endblock %}
+
+{% block content %}
+<div>
+    These are the attributes computed for {{ object }}.
+    Please make sure they are correct and select the correct instruments below.
+    <div class="form-row">
+        {% if object.remarks %}
+                The member provided the following remarks:
+                <p>{{ object.remarks }}</p>
+        {% else %}
+            The member did not provide any remarks.
+        {% endif %}
+    </div>
+</div>
+<form method="post">{% csrf_token %}
+    <div class="module aligned">
+        <div class="form-row field-username">
+            {{ form.username.errors }}
+            <div class="flex-container">
+                {{ form.username.label_tag }}
+                {{ form.username }}
+            </div>
+        </div>
+        <div class="form-row field-person_id">
+            {{ form.person_id.errors }}
+            <div class="flex-container">
+                {{ form.person_id.label_tag }}
+                {{ form.person_id }}
+            </div>
+        </div>
+        <div class="form-row field-instruments">
+            {{ form.instruments.errors }}
+            <div>
+                {{ form.instruments.label_tag }}
+                <p>The member described their instrument(s) as follows: {{ object.instruments }} <br>
+                    Please select the correct instrument(s) below.</p>
+                {{ form.instruments }}
+                {% if can_add_instruments %}
+                <a class="related-widget-wrapper-link add-related" id="add_id_instruments"
+                            data-popup="yes"
+                            href="{% url 'admin:members_instrument_add' %}?_to_field=id&_popup=1"
+                            title="Add another instrument"><img src="{% static "admin/img/icon-addlink.svg" %}" alt="Add"></a>
+                {% endif %}
+            </div>
+        </div>
+        <div class="submit-row">
+            <input type="submit" name="continue" class="default" value="Continue">
+            <a href="{% url 'admin:members_membershiprequest_change' object.pk %}" class="closelink">Go back</a>
+        </div>
+    </div>
+</form>
+{% endblock %}

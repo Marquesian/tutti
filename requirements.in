@@ -15,5 +15,6 @@ whitenoise[brotli]
 django-environ
 django-q
 django-bootstrap4
-django-multiselectfield  # Used on subscribe form, TODO: remove
+django-multiselectfield
 matplotlib
+pillow==11.3.0

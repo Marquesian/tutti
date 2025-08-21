@@ -8,11 +8,13 @@ from django.contrib.auth.forms import UserChangeForm, AdminPasswordChangeForm
 from django.core.exceptions import PermissionDenied
 from django.db.models import Q
 from django.http import HttpResponseRedirect, Http404
+from django.shortcuts import redirect
 from django.template.response import TemplateResponse
 from django.urls import reverse, path
 from import_export.admin import ImportExportMixin
 
 from members.adminresources import PersonResource
+from members.forms import ProcessMembershipRequestForm
 from members.models import User, QGroup, Person, Instrument, Key, ExternalCard, \
     ExternalCardLoan, GroupMembership, PersonTreasurerFields, MembershipRequest
 
@@ -214,7 +216,7 @@ class PersonAdmin(admin.ModelAdmin):
                 "photo_video_consent_external_group",
                 "photo_video_consent_external",
                 'person_id', 'is_student', ('iban', 'sepa_direct_debit', 'sepa_sign_date'),
-                       'bhv_certificate', 'notes')
+                'bhv_certificate', 'notes')
         }),
         ('TU/e', {
             'fields': ('tue_card_number', 'key_access', ('keywatcher_id', 'keywatcher_pin'))
@@ -319,6 +321,35 @@ class PersonAdmin(admin.ModelAdmin):
         fieldsets[0][1]["fields"] = ("username",) if not obj else ("username", "password")
         return fieldsets
 
+    def populate_form_from_membership_request(self, form, membership_request):
+        msr_attributes = {field.name for field in MembershipRequest._meta.get_fields()}
+        person_attributes = {field.name for field in self.model._meta.get_fields()}
+
+        for common_attribute in msr_attributes & person_attributes - {'id'}:
+            form.base_fields[common_attribute].initial = getattr(membership_request, common_attribute)
+
+        # Ideally we wouldn't need to hardcode the sub associations. For now™ we mitigate by soft-failing.
+        qgroup_names = ['Huidige leden']
+        qgroup_names += [MembershipRequest.QGROUP_MAPPER[sa] for sa in membership_request.sub_association]
+        qgroups = [qgroup.pk for qgroup in QGroup.objects.filter(name__in=qgroup_names)]
+        form.base_fields['groups'].initial = qgroups
+
+    def get_form(self, request, obj=None, **kwargs):
+        form = super(PersonAdmin, self).get_form(request, obj, **kwargs)
+        if 'membership_request' in request.GET:
+            key = request.GET['membership_request']
+            membership_request = MembershipRequest.objects.get(pk=key)
+            self.populate_form_from_membership_request(form, membership_request)
+        return form
+
+    def save_model(self, request, obj, form, change):
+        super().save_model(request, obj, form, change)
+        if 'membership_request' in request.GET:
+            key = request.GET['membership_request']
+            membership_request = MembershipRequest.objects.get(pk=key)
+            membership_request.processed = True
+            membership_request.save()
+
 
 @admin.register(Person)
 class PersonImportExportAdmin(ImportExportMixin, PersonAdmin):
@@ -358,10 +389,75 @@ class MembershipRequestAdmin(admin.ModelAdmin):
     form_fields = (
         'first_name', 'last_name', 'email', 'phone_number', 'instruments', 'initials', 'street', 'postal_code',
         'city', 'country', 'gender', 'date_of_birth', 'preferred_language', 'is_student', 'field_of_study', 'iban',
-        'tue_card_number', 'remarks')
-    other_fields = ('date', 'seen')
+        'tue_card_number', 'sub_association', 'photo_video_consent_internal', 'photo_video_consent_external_group',
+        'photo_video_consent_external', 'remarks')
+    other_fields = ('date', 'processed')
     fieldsets = ((None, {'fields': form_fields}), ("Meta", {'fields': other_fields}))
     readonly_fields = form_fields + ('date',)
-    list_display = ('last_name', 'first_name', 'email', 'instruments', 'date', 'seen')
+    list_display = ('last_name', 'first_name', 'email', 'instruments', 'date', 'processed')
     ordering = ('-date',)
-    list_filter = ('seen',)
+    list_filter = ('processed',)
+
+    def has_add_permission(self, request):
+        return False
+
+    def has_delete_permission(self, request, obj=None):
+        return False
+
+    def has_change_permission(self, request, obj=None):
+        return False
+
+    def get_urls(self):
+        base_name = f"{self.opts.app_label}_{self.opts.model_name}"
+        return [
+            path("<int:pk>/register/", self.admin_site.admin_view(self.register_view), name=f"{base_name}_register"),
+            path("<int:pk>/ignore/", self.admin_site.admin_view(self.ignore_view), name=f"{base_name}_ignore"),
+        ] + super().get_urls()
+
+    def register_view(self, request, pk):
+        membership_request = MembershipRequest.objects.get(pk=pk)
+        if request.method == "POST":
+            form = ProcessMembershipRequestForm(request.POST)
+            if form.is_valid():
+                # Moving on to person_add with prepopulated fields.
+                data = f"&username={request.POST['username']}&person_id={request.POST['person_id']}"
+                instruments = request.POST.getlist('instruments')
+                if instruments:
+                    data += f"&instruments={','.join(instruments)}"
+                return redirect(reverse("admin:members_person_add") + "?membership_request=" + str(pk) + data)
+        else:
+            def _sanitize(s):
+                return ''.join(filter(str.isalnum, s))
+            username = _sanitize(membership_request.initials + membership_request.last_name).lower()
+            person_id = _sanitize(membership_request.first_name)[:3] + _sanitize(membership_request.last_name)[:3]
+            person_id = person_id.upper().ljust(6, 'X')
+            form = ProcessMembershipRequestForm(initial=dict(
+                username=username,
+                person_id=person_id
+            ))
+
+        context = dict(
+            self.admin_site.each_context(request),
+            object=membership_request,
+            opts=MembershipRequest._meta,
+            form=form,
+            title="Check computed values",
+            can_add_instruments=request.user.has_perm('members.add_instrument'),
+        )
+        return TemplateResponse(request, "admin/members/membershiprequest/register.html", context)
+
+    def ignore_view(self, request, pk):
+        membership_request = MembershipRequest.objects.get(pk=pk)
+
+        if request.method == "POST":
+            membership_request.processed = True
+            membership_request.save()
+            return redirect("admin:members_membershiprequest_changelist")
+
+        context = dict(
+            self.admin_site.each_context(request),
+            object=membership_request,
+            opts=MembershipRequest._meta,
+            title="Are you sure?",
+        )
+        return TemplateResponse(request, "admin/members/membershiprequest/ignore.html", context)
