@@ -50,8 +50,8 @@
             {{ form.instruments.errors }}
             <div>
                 {{ form.instruments.label_tag }}
-                <p>The member described their instrument(s) as follows: {{ object.instruments }} <br>
-                    Please select the correct instrument(s) below.</p>
+                <p>The member described their instrument(s) as follows: <strong>{{ object.instruments }}</strong></p>
+                <p>Please select the correct instrument(s) below.</p>
                 {{ form.instruments }}
                 {% if can_add_instruments %}
                 <a class="related-widget-wrapper-link add-related" id="add_id_instruments"

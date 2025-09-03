@@ -329,9 +329,9 @@ class PersonAdmin(admin.ModelAdmin):
             form.base_fields[common_attribute].initial = getattr(membership_request, common_attribute)
 
         # Ideally we wouldn't need to hardcode the sub associations. For now™ we mitigate by soft-failing.
-        qgroup_names = ['Huidige leden']
-        qgroup_names += [MembershipRequest.QGROUP_MAPPER[sa] for sa in membership_request.sub_association]
-        qgroups = [qgroup.pk for qgroup in QGroup.objects.filter(name__in=qgroup_names)]
+        qgroup_names = [MembershipRequest.QGROUP_MAPPER[sa] for sa in membership_request.sub_association]
+        qgroups = list(QGroup.objects.filter(name__in=qgroup_names).values_list('pk', flat=True))
+        qgroups.append(settings.MEMBERS_GROUP)
         form.base_fields['groups'].initial = qgroups
 
     def get_form(self, request, obj=None, **kwargs):
@@ -340,15 +340,15 @@ class PersonAdmin(admin.ModelAdmin):
             key = request.GET['membership_request']
             membership_request = MembershipRequest.objects.get(pk=key)
             self.populate_form_from_membership_request(form, membership_request)
+        # Enforce uniqueness in Django, and not at database level, for backwards compatibility
+        form.base_fields['person_id'].validators.append(Person.validate_person_id_unique)
         return form
 
     def save_model(self, request, obj, form, change):
         super().save_model(request, obj, form, change)
         if 'membership_request' in request.GET:
             key = request.GET['membership_request']
-            membership_request = MembershipRequest.objects.get(pk=key)
-            membership_request.processed = True
-            membership_request.save()
+            MembershipRequest.objects.filter(pk=key).update(processed=True)
 
 
 @admin.register(Person)
@@ -447,16 +447,13 @@ class MembershipRequestAdmin(admin.ModelAdmin):
         return TemplateResponse(request, "admin/members/membershiprequest/register.html", context)
 
     def ignore_view(self, request, pk):
-        membership_request = MembershipRequest.objects.get(pk=pk)
-
         if request.method == "POST":
-            membership_request.processed = True
-            membership_request.save()
+            MembershipRequest.objects.filter(pk=pk).update(processed=True)
             return redirect("admin:members_membershiprequest_changelist")
 
         context = dict(
             self.admin_site.each_context(request),
-            object=membership_request,
+            object=MembershipRequest.objects.get(pk=pk),
             opts=MembershipRequest._meta,
             title="Are you sure?",
         )

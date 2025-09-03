@@ -4,6 +4,7 @@ from datetime import date
 from django.conf import settings
 from django.contrib.auth.models import AbstractUser, Group, UserManager
 from django.core import validators
+from django.core.exceptions import ValidationError
 from django.db import models
 from django.db.models import QuerySet
 from django.utils import timezone
@@ -266,6 +267,12 @@ class Person(User):
             return date(2019, 12, 1)
         return self.sepa_sign_date
 
+    @staticmethod
+    def validate_person_id_unique(value):
+        """Raises ValidationError if the person ID is not unique. Only used by other classes."""
+        if value and Person.objects.filter(person_id=value).exists():
+            raise ValidationError(_("A person with this Person ID already exists. Please provide an unused Person ID."))
+
 
 class PersonTreasurerFields(Person):
     """Person proxy for use in admin for treasurer fields, see admin.py."""
@@ -321,7 +328,7 @@ class MembershipRequest(models.Model):
     first_name = models.CharField(max_length=150)
     last_name = models.CharField(max_length=150)
     email = models.EmailField(max_length=150, verbose_name="email address")
-    phone_number = PhoneNumberField(region="NL")
+    phone_number = PhoneNumberField()
     instruments = models.CharField(max_length=150, verbose_name="instrument(s) or voice")
 
     initials = models.CharField(max_length=30,

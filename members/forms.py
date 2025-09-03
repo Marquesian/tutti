@@ -135,14 +135,12 @@ class ProcessMembershipRequestForm(forms.Form):
 
     def clean_username(self):
         username = self.cleaned_data['username']
-
         if User.objects.filter(username=username).exists():
             raise forms.ValidationError('A user with this username already exists. Please provide an unused username.')
 
     def clean_person_id(self):
         person_id = self.cleaned_data['person_id']
-        if Person.objects.filter(person_id=person_id).exists():
-            raise forms.ValidationError('A person with this Person ID already exists. Please provide an unused Person ID.')
+        Person.validate_person_id_unique(person_id)
 
     class Media:
         css = {
