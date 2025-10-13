@@ -333,7 +333,7 @@ class MembershipRequest(models.Model):
 
     initials = models.CharField(max_length=30,
                                 blank=True,
-                                help_text="Initials of your first name(s) if you have multiple. In Dutch: voorletters.")
+                                help_text="Initials of your first name(s), so excluding your surname(s). For example: Anna Maria Janssen gives A.M.")
 
     # Address
     street = models.CharField(max_length=150, blank=True, verbose_name="street and house number")

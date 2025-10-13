@@ -322,10 +322,10 @@ class PersonAdmin(admin.ModelAdmin):
         return fieldsets
 
     def populate_form_from_membership_request(self, form, membership_request):
-        msr_attributes = {field.name for field in MembershipRequest._meta.get_fields()}
+        membership_request_attributes = {field.name for field in MembershipRequest._meta.get_fields()}
         person_attributes = {field.name for field in self.model._meta.get_fields()}
 
-        for common_attribute in msr_attributes & person_attributes - {'id'}:
+        for common_attribute in membership_request_attributes & person_attributes - {'id'}:
             form.base_fields[common_attribute].initial = getattr(membership_request, common_attribute)
 
         # Ideally we wouldn't need to hardcode the sub associations. For now™ we mitigate by soft-failing.
