@@ -223,6 +223,7 @@ SERVER_EMAIL = os.getenv('DJANGO_SERVER_EMAIL', 'root@localhost')
 DEFAULT_FROM_EMAIL = os.getenv('DJANGO_DEFAULT_FROM_EMAIL', 'webmaster@localhost')
 # E-mail address string where 5xx errors are sent, e.g. 'Me <my@address.net>, Someone Else <his@address.com>'
 ADMINS = getaddresses([os.getenv('DJANGO_ADMINS', default='')])
+MEMBERSHIP_REQUEST_RECIPIENT = os.getenv('DJANGO_MEMBERSHIP_REQUEST_RECIPIENT', 'subscriptions@esmgquadrivium.nl')
 
 # Ensure cookies over HTTPS
 if env.bool('DJANGO_COOKIE_SECURE', default=False):
