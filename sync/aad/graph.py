@@ -4,8 +4,12 @@ from typing import List, Dict
 from uuid import uuid4
 
 import requests
+import logging
 from django.conf import settings
 from requests import Response
+from urllib3.exceptions import HTTPError
+
+logger = logging.getLogger(__name__)
 
 
 class GraphObject:
@@ -223,7 +227,12 @@ class Graph:
         }
         response = requests.request(method, url, params=params, json=json, headers=headers)
         if raise_for_status:
-            response.raise_for_status()
+            try:
+                response.raise_for_status()
+            except HTTPError as http_err:
+                logger.error(response.text)
+                raise http_err
+
         return response
 
     def call_resource(self, resource: str, **kwargs) -> Response:
