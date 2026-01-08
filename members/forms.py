@@ -84,6 +84,8 @@ class SubscribeForm(forms.ModelForm):
         super().__init__(*args, **kwargs)
         self.populate_boolean_fields()
         self.fields['date_of_birth'].input_formats = ('%d-%m-%Y',)
+        # In practice we want all these fields required but historically there are People that do not have those values
+        # set. Therefore we make these required at the Form level.
         for field in self.Meta.required:
             self.fields[field].required = True
 

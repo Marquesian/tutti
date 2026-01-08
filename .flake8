@@ -10,7 +10,7 @@ exclude =
     */migrations,
     venv
 max-complexity = 10
-max-line-length = 127
+max-line-length = 300
 
 # docstrings
 docstring-convention = google
