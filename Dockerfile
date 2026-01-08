@@ -1,19 +1,18 @@
 # Docker image for Tutti with static files baked in.
 #
-#
 # Static files are handled by WhiteNoise. Media files are stored in /app/media,
 # so that folder should be mounted as a Docker volume.
 #
 # The default command runs the gunicorn server on port 8000. You need to run
 # migrate yourself, e.g. using `docker run tutti python manage.py migrate
 # --noinput`.
-FROM python:3.11
+FROM python:3.11.14
 
 ENV PYTHONDONTWRITEBYTECODE=1 PYTHONUNBUFFERED=1
 
 WORKDIR /app/src
 
-RUN pip install --no-cache-dir gunicorn==22.0.0 psycopg==3.1.19
+RUN pip install --no-cache-dir gunicorn==23.0.0 psycopg==3.2.10
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
