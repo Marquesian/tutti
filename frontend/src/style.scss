@@ -104,3 +104,13 @@ main > .container {
     // Padding for the navbar
     padding-top: 66px;
 }
+
+.form-group.required .control-label:after {
+    color: #d00;
+    content: "*";
+    margin-left: 0.25em;
+}
+
+.form-group.is-invalid > .invalid-feedback {
+    display: block;
+}

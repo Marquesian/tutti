@@ -4,6 +4,7 @@ from datetime import date
 from django.conf import settings
 from django.contrib.auth.models import AbstractUser, Group, UserManager
 from django.core import validators
+from django.core.exceptions import ValidationError
 from django.db import models
 from django.db.models import QuerySet
 from django.utils import timezone
@@ -13,6 +14,7 @@ from django_countries.fields import CountryField
 from ldap3 import HASHED_SALTED_SHA512
 from ldap3.utils.hashed import hashed
 from localflavor.generic.models import IBANField
+from multiselectfield import MultiSelectField
 from phonenumber_field.modelfields import PhoneNumberField
 
 
@@ -201,15 +203,17 @@ class Person(User):
         null=True,
         blank=True,
         verbose_name='photos/videos consent external group',
-        help_text="Whether the person has given consent to share group photos and videos of them externally (on website, social media). With group is meant large groups, such as pictures of a full orchestra or choir during a concert."
+        help_text="Whether the person has given consent to share group photos and videos of them externally (on "
+                  "website, social media). With group is meant large groups, such as pictures of a full orchestra or "
+                  "choir during a concert."
     )
     photo_video_consent_external = models.BooleanField(
         null=True,
         blank=True,
         verbose_name='photos/videos consent external non-group',
-        help_text="Whether the person has given consent to share other photos and videos of them externally (on website, social media)."
+        help_text="Whether the person has given consent to share other photos and videos of them externally (on "
+                  "website, social media)."
     )
-    
 
     is_student = models.BooleanField(null=True, blank=True)
 
@@ -263,6 +267,12 @@ class Person(User):
             return date(2019, 12, 1)
         return self.sepa_sign_date
 
+    @staticmethod
+    def validate_person_id_unique(value):
+        """Raises ValidationError if the person ID is not unique. Only used by other classes."""
+        if value and Person.objects.filter(person_id=value).exists():
+            raise ValidationError(_("A person with this Person ID already exists. Please provide an unused Person ID."))
+
 
 class PersonTreasurerFields(Person):
     """Person proxy for use in admin for treasurer fields, see admin.py."""
@@ -315,7 +325,6 @@ class ExternalCardLoan(models.Model):
 
 
 class MembershipRequest(models.Model):
-    # TODO: this model is no longer used and can be removed.
     first_name = models.CharField(max_length=150)
     last_name = models.CharField(max_length=150)
     email = models.EmailField(max_length=150, verbose_name="email address")
@@ -342,33 +351,55 @@ class MembershipRequest(models.Model):
     tue_card_number = models.IntegerField(
         null=True,
         blank=True,
-        verbose_name='TU/e card number',
+        verbose_name='TU/e campus card number',
         help_text="If you have a TU/e campus card, fill in the number that is printed sideways, "
                   "which is different from your student number or s-number. "
                   "We will then make it possible for you to enter "
                   "the cultural section in Luna using your campus card, during off-hours. During the "
                   "day however the entrance is usually always open to anyone.")
     date_of_birth = models.DateField(null=True, blank=True, help_text="dd-mm-yyyy")
+
+    GENDER_CHOICES = (('male', 'Male'), ('female', 'Female'), ('other', 'Other'))
     gender = models.CharField(max_length=30,
                               blank=True,
-                              choices=(('male', 'Male'), ('female', 'Female')))
-    is_student = models.BooleanField(null=True,
-                                     blank=True,
-                                     verbose_name='student',
-                                     help_text="At any university or high school.")
+                              choices=GENDER_CHOICES)
 
-    # Broken in Django 4.1
-    # sub_association = MultiSelectField(
-    #     choices=[
-    #         ("vokollage", "Vokollage – choir"),
-    #         ("ensuite", "Ensuite – symphony orchestra"),
-    #         ("auletes", "Auletes – wind orchestra"),
-    #         ("piano", "Piano member – join association-wide activities and use our rehearsal rooms")],
-    #     verbose_name="sub-association",
-    #     blank=True,
-    #     help_text="Which sub-associations are you interested in? "
-    #               "If you are not interested in the orchestra and choir, select piano member. "
-    #               "Leave empty if you are not (yet) sure.")
+    photo_video_consent_external = models.BooleanField(
+        default=None,
+        verbose_name='External non-group',
+        help_text="Can we use group photos and videos containing you for external purposes (website, social media and "
+                  "other promotional activities)?"
+    )
+    photo_video_consent_external_group = models.BooleanField(
+        default=None,
+        verbose_name='External group',
+        help_text="Can we use other photos and videos containing you for external purposes (website, social media and "
+                  "other promotional activities)?"
+    )
+    photo_video_consent_internal = models.BooleanField(
+        default=None,
+        verbose_name="Internal",
+        help_text="Can we share photos and videos containing you internally with other members of Quadrivium?"
+    )
+
+    is_student = models.BooleanField(null=True, blank=True, verbose_name='student',
+                                     help_text="If you’re a student at any school or university, indicate yes.")
+
+    # Maps form choices to QGroup names
+    QGROUP_MAPPER = {"vokollage": 'Vokollage', "ensuite": "Ensuite", "auletes": "Auletes",
+                     "piano": "Pianisten"}
+    sub_association = MultiSelectField(
+        choices=[
+            ("vokollage", "Vokollage – choir"),
+            ("ensuite", "Ensuite – symphony orchestra"),
+            ("auletes", "Auletes – wind orchestra"),
+            ("piano", "Piano member – join association-wide activities and use our rehearsal rooms")],
+        verbose_name="sub-association",
+        blank=True,
+        help_text="Which sub-associations are you interested in? "
+                  "If you are not interested in the orchestra and choir, select piano member. "
+                  "Leave empty if you are not (yet) sure.",
+        max_length=200)
 
     field_of_study = models.CharField(max_length=150,
                                       blank=True,
@@ -385,7 +416,7 @@ class MembershipRequest(models.Model):
     date = models.DateTimeField(default=timezone.now,
                                 help_text="When the form was submitted.")
 
-    seen = models.BooleanField(default=False)
+    processed = models.BooleanField(default=False)
 
     def __str__(self):
         return "{} {}".format(self.first_name, self.last_name).strip()

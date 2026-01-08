@@ -1,0 +1,31 @@
+{% extends "admin/base_site.html" %}
+{% load i18n admin_urls static %}
+
+{% block extrahead %}
+    {{ block.super }}
+    <link href="{% static "admin/css/forms.css" %}" media="all" rel="stylesheet">
+{% endblock %}
+
+{% block bodyclass %}{{ block.super }} delete-confirmation{% endblock %}
+
+{% block breadcrumbs %}
+<div class="breadcrumbs">
+<a href="{% url 'admin:index' %}">Home</a>
+&rsaquo; <a href="{% url 'admin:app_list' app_label=opts.app_label %}">{{ opts.app_config.verbose_name }}</a>
+&rsaquo; <a href="{% url opts|admin_urlname:'changelist' %}">{{ opts.verbose_name_plural|capfirst }}</a>
+&rsaquo; <a href="{% url opts|admin_urlname:'change' object.pk|admin_urlquote %}">{{ object|truncatewords:"18" }}</a>
+&rsaquo; Ignore
+</div>
+{% endblock %}
+
+{% block content %}
+    <p>Are you sure you want to ignore the membership request by {{ object }}?</p>
+    <p>
+        This will only result in the membership request being marked as processed. If you change your mind in the future,
+        you can still register the person from the processed membership request.
+    </p>
+    <form method="post">{% csrf_token %}
+        <input type="submit" name="ignore" value="Ignore">
+        <a href="{% url 'admin:members_membershiprequest_change' object.pk %}" class="cancel-link">Go back</a>
+    </form>
+{% endblock %}
