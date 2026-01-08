@@ -366,18 +366,21 @@ class MembershipRequest(models.Model):
 
     photo_video_consent_external = models.BooleanField(
         default=None,
+        null=True,
         verbose_name='External non-group',
         help_text="Can we use group photos and videos containing you for external purposes (website, social media and "
                   "other promotional activities)?"
     )
     photo_video_consent_external_group = models.BooleanField(
         default=None,
+        null=True,
         verbose_name='External group',
         help_text="Can we use other photos and videos containing you for external purposes (website, social media and "
                   "other promotional activities)?"
     )
     photo_video_consent_internal = models.BooleanField(
         default=None,
+        null=True,
         verbose_name="Internal",
         help_text="Can we share photos and videos containing you internally with other members of Quadrivium?"
     )
