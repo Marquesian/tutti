@@ -22,6 +22,14 @@ Q members admin.
   manage.py ldapsync -h`.
 
 
+### Upgrading dependencies
+
+Run `pip-compile -U requirements.in` to update the requirements.txt lock file with
+new version numbers. Then install the new versions with `pip install -r requirements.txt`.
+If pip-compile is missing, install it with `pip install pip-tools`.
+
+For development requirements, repeat the same with `dev-requirements.in`.
+
 ## Build CSS+JS
 
 See `frontend/README.md`.

@@ -1,12 +1,15 @@
 from datetime import date
 
+from django.conf import settings
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib.auth.views import PasswordChangeDoneView, PasswordChangeView
+from django.core.mail import send_mail
 from django.urls import reverse_lazy
 from django.utils.safestring import mark_safe
 from django.views.generic import FormView, TemplateView
 
 from members.forms import MyPasswordChangeForm, ProfileForm, SubscribeForm
+from members.models import MembershipRequest
 
 
 class ProfileView(LoginRequiredMixin, TemplateView):
@@ -58,8 +61,22 @@ class SubscribeView(FormView):
     success_url = reverse_lazy('members:subscribe_done')
 
     def form_valid(self, form):
-        form.save()
+        membership_request = form.save()
+        self.send_request_notification(membership_request)
         return super().form_valid(form)
+
+    def send_request_notification(self, membership_request: MembershipRequest):
+        """Sends a notification to a board member for the new request."""
+        message = f"""Name: {membership_request.first_name} {membership_request.last_name}
+E-mail: {membership_request.email}
+Instrument: {membership_request.instruments}
+Language: {dict(MembershipRequest.PREFERRED_LANGUAGES)[membership_request.preferred_language]}
+Student: {membership_request.is_student}
+Sub-association: {', '.join([MembershipRequest.QGROUP_MAPPER[m] for m in membership_request.sub_association])}
+Remarks: {membership_request.remarks}
+"""
+
+        send_mail("New membership request", message, None, [settings.MEMBERSHIP_REQUEST_RECIPIENT])
 
 
 class SubscribeDoneView(TemplateView):
