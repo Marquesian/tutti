@@ -1,3 +1,5 @@
+from functools import partial
+
 from django import forms
 from django.conf import settings
 from django.contrib import admin, messages
@@ -341,7 +343,7 @@ class PersonAdmin(admin.ModelAdmin):
             membership_request = MembershipRequest.objects.get(pk=key)
             self.populate_form_from_membership_request(form, membership_request)
         # Enforce uniqueness in Django, and not at database level, for backwards compatibility
-        form.base_fields['person_id'].validators.append(Person.validate_person_id_unique)
+        form.base_fields['person_id'].validators.append(partial(Person.validate_person_id_unique, id=obj.id if obj else None))
         return form
 
     def save_model(self, request, obj, form, change):
