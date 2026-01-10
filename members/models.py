@@ -268,9 +268,9 @@ class Person(User):
         return self.sepa_sign_date
 
     @staticmethod
-    def validate_person_id_unique(value):
+    def validate_person_id_unique(value, id=None):
         """Raises ValidationError if the person ID is not unique. Only used by other classes."""
-        if value and Person.objects.filter(person_id=value).exists():
+        if value and Person.objects.filter(person_id=value).exclude(pk=id).exists():
             raise ValidationError(_("A person with this Person ID already exists. Please provide an unused Person ID."))
 
 
